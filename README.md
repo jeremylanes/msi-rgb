@@ -36,10 +36,35 @@ A modern, Apple & DaVinci-grade Linux RGB keyboard controller in **Rust** and **
 
 ---
 
+## 📦 Automated Installation
+
+### 1-Line Installer via `curl` (Recommended)
+
+Install dependencies, compile, and configure the desktop application and autostart in a single command:
+
+```bash
+# Install to your user session (no sudo required)
+curl -fsSL https://raw.githubusercontent.com/jeremylanes/msi-rgb/main/bin/install.sh | bash -s -- --user
+
+# Or install system-wide (requires sudo)
+curl -fsSL https://raw.githubusercontent.com/jeremylanes/msi-rgb/main/bin/install.sh | bash -s -- --system
+```
+
+### From Local Source Repository
+```bash
+./bin/install.sh --user
+```
+
+---
+
 ## 🚀 Quick Start
 
 ### 1. Launching GUI
 ```bash
+# Directly via application menu or terminal command
+msi-rgb
+
+# Or from local source directory
 ./bin/msi-rgb
 ```
 
