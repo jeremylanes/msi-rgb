@@ -85,7 +85,7 @@ impl RgbColor {
         )
     }
 
-    /// Returns perceived relative luminance (0.0..=1.0).
+    /// Converts perceived relative luminance (0.0..=1.0).
     #[must_use]
     pub fn relative_luminance(self) -> f64 {
         0.2126 * (self.r as f64 / 255.0)
@@ -97,6 +97,83 @@ impl RgbColor {
     #[must_use]
     pub const fn is_off(self) -> bool {
         self.r == 0 && self.g == 0 && self.b == 0
+    }
+
+    /// Converts RGB (0..=255) to HSV representation:
+    /// Hue in degrees `[0.0, 360.0)`, Saturation `[0.0, 1.0]`, Value `[0.0, 1.0]`.
+    ///
+    /// Example:
+    /// ```
+    /// use msi_rgb::domain::color::RgbColor;
+    ///
+    /// let red = RgbColor::new(255, 0, 0);
+    /// let (h, s, v) = red.to_hsv();
+    /// assert!((h - 0.0).abs() < 1e-4);
+    /// assert!((s - 1.0).abs() < 1e-4);
+    /// assert!((v - 1.0).abs() < 1e-4);
+    /// ```
+    #[must_use]
+    pub fn to_hsv(self) -> (f64, f64, f64) {
+        let (r, g, b) = self.to_f64();
+        let max = r.max(g).max(b);
+        let min = r.min(g).min(b);
+        let delta = max - min;
+
+        let v = max;
+        let s = if max > 0.0 { delta / max } else { 0.0 };
+
+        let h = if delta == 0.0 {
+            0.0
+        } else if (max - r).abs() < f64::EPSILON {
+            60.0 * (((g - b) / delta).rem_euclid(6.0))
+        } else if (max - g).abs() < f64::EPSILON {
+            60.0 * (((b - r) / delta) + 2.0)
+        } else {
+            60.0 * (((r - g) / delta) + 4.0)
+        };
+
+        (h.rem_euclid(360.0), s.clamp(0.0, 1.0), v.clamp(0.0, 1.0))
+    }
+
+    /// Converts HSV representation to `RgbColor`.
+    /// `h` in degrees `[0.0, 360.0)`, `s` in `[0.0, 1.0]`, `v` in `[0.0, 1.0]`.
+    ///
+    /// Example:
+    /// ```
+    /// use msi_rgb::domain::color::RgbColor;
+    ///
+    /// let color = RgbColor::from_hsv(180.0, 1.0, 1.0);
+    /// assert_eq!(color, RgbColor::new(0, 255, 255));
+    /// ```
+    #[must_use]
+    pub fn from_hsv(h: f64, s: f64, v: f64) -> Self {
+        let h_norm = h.rem_euclid(360.0);
+        let s_clamped = s.clamp(0.0, 1.0);
+        let v_clamped = v.clamp(0.0, 1.0);
+
+        let c = v_clamped * s_clamped;
+        let x = c * (1.0 - ((h_norm / 60.0).rem_euclid(2.0) - 1.0).abs());
+        let m = v_clamped - c;
+
+        let (r_prime, g_prime, b_prime) = if h_norm < 60.0 {
+            (c, x, 0.0)
+        } else if h_norm < 120.0 {
+            (x, c, 0.0)
+        } else if h_norm < 180.0 {
+            (0.0, c, x)
+        } else if h_norm < 240.0 {
+            (0.0, x, c)
+        } else if h_norm < 300.0 {
+            (x, 0.0, c)
+        } else {
+            (c, 0.0, x)
+        };
+
+        Self {
+            r: ((r_prime + m) * 255.0).round().clamp(0.0, 255.0) as u8,
+            g: ((g_prime + m) * 255.0).round().clamp(0.0, 255.0) as u8,
+            b: ((b_prime + m) * 255.0).round().clamp(0.0, 255.0) as u8,
+        }
     }
 }
 
@@ -158,5 +235,31 @@ mod tests {
         assert!("invalid".parse::<RgbColor>().is_err());
         assert!("#12345".parse::<RgbColor>().is_err());
         assert!("#1234567".parse::<RgbColor>().is_err());
+    }
+
+    #[test]
+    fn test_hsv_conversions() {
+        let red = RgbColor::new(255, 0, 0);
+        let (h, s, v) = red.to_hsv();
+        assert!((h - 0.0).abs() < 1e-4);
+        assert!((s - 1.0).abs() < 1e-4);
+        assert!((v - 1.0).abs() < 1e-4);
+        assert_eq!(RgbColor::from_hsv(h, s, v), red);
+
+        let green = RgbColor::new(0, 255, 0);
+        let (hg, sg, vg) = green.to_hsv();
+        assert!((hg - 120.0).abs() < 1e-4);
+        assert_eq!(RgbColor::from_hsv(hg, sg, vg), green);
+
+        let cyan = RgbColor::new(0, 255, 255);
+        let (hc, sc, vc) = cyan.to_hsv();
+        assert!((hc - 180.0).abs() < 1e-4);
+        assert_eq!(RgbColor::from_hsv(hc, sc, vc), cyan);
+
+        let white = RgbColor::WHITE;
+        let (_hw, sw, vw) = white.to_hsv();
+        assert!((sw - 0.0).abs() < 1e-4);
+        assert!((vw - 1.0).abs() < 1e-4);
+        assert_eq!(RgbColor::from_hsv(0.0, 0.0, 1.0), white);
     }
 }

@@ -101,32 +101,51 @@ fn main() {
     let (service, _service_handle) = RgbService::spawn(state.clone(), storage.clone(), use_mock);
     let service_arc = Arc::new(service);
 
-    // Command line: Apply profile and exit
+    // Command line: Apply specific profile
     if let Some(ref prof_name) = args.profile {
         println!("Applying profile '{prof_name}'...");
         let s = service_arc.clone();
         let name = prof_name.clone();
+        let st = state.clone();
         rt.block_on(async move {
-            if let Err(e) = s.apply_profile(&name).await {
-                eprintln!("Error applying profile: {e}");
+            let _ = s.apply_profile(&name).await;
+            // Wait up to 10 seconds for backend connection & application
+            for _ in 0..20 {
+                tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+                let data = st.read().await;
+                if data.backend_status.is_connected() {
+                    println!("Successfully applied profile '{name}' to keyboard.");
+                    break;
+                }
             }
-            tokio::time::sleep(std::time::Duration::from_millis(300)).await;
         });
-        return;
+        if !args.daemon {
+            return;
+        }
     }
 
-    // Command line: Apply default and exit
+    // Command line: Apply startup default
     if args.apply_default {
         let startup_name = profile_manager.startup_profile_name().to_string();
         println!("Applying startup profile '{startup_name}'...");
         let s = service_arc.clone();
+        let st = state.clone();
+        let name = startup_name.clone();
         rt.block_on(async move {
-            if let Err(e) = s.apply_profile(&startup_name).await {
-                eprintln!("Error applying default profile: {e}");
+            let _ = s.apply_profile(&name).await;
+            // Wait up to 20 seconds for backend to connect and apply (handles system boot)
+            for _ in 0..40 {
+                tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+                let data = st.read().await;
+                if data.backend_status.is_connected() {
+                    println!("Successfully applied startup profile '{name}' to keyboard.");
+                    break;
+                }
             }
-            tokio::time::sleep(std::time::Duration::from_millis(300)).await;
         });
-        return;
+        if !args.daemon {
+            return;
+        }
     }
 
     // Daemon mode (background service loop)

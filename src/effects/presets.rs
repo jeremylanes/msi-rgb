@@ -50,8 +50,32 @@ impl ColorPreset {
             color: RgbColor::YELLOW,
         },
         Self {
-            name: "Pure White",
+            name: "Vaporwave Pink",
+            color: RgbColor::new(255, 113, 206),
+        },
+        Self {
+            name: "Glacier Blue",
+            color: RgbColor::new(1, 205, 254),
+        },
+        Self {
+            name: "Toxic Lime",
+            color: RgbColor::new(57, 255, 20),
+        },
+        Self {
+            name: "Electric Orange",
+            color: RgbColor::new(255, 102, 0),
+        },
+        Self {
+            name: "Tokyo Indigo",
+            color: RgbColor::new(99, 102, 241),
+        },
+        Self {
+            name: "Pure White 6500K",
             color: RgbColor::WHITE,
+        },
+        Self {
+            name: "Warm Candle 2700K",
+            color: RgbColor::new(255, 180, 107),
         },
     ];
 }

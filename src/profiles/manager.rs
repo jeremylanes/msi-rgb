@@ -120,6 +120,26 @@ impl ProfileManager {
         self.store.set_startup_profile(name)
     }
 
+    /// Updates the state of an existing profile or creates a new one.
+    ///
+    /// Example:
+    /// ```
+    /// use msi_rgb::profiles::manager::ProfileManager;
+    /// use msi_rgb::domain::device::RgbState;
+    ///
+    /// let mut manager = ProfileManager::with_defaults();
+    /// manager.save_or_update_current_state("My Profile", RgbState::default());
+    /// assert!(manager.get_profile("My Profile").is_some());
+    /// ```
+    pub fn save_or_update_current_state(&mut self, name: &str, state: RgbState) {
+        if let Some(existing) = self.store.get_profile_mut(name) {
+            existing.state = state;
+        } else {
+            let p = UserProfile::new(name, "Custom profile", state);
+            self.store.save_or_update(p);
+        }
+    }
+
     /// Gets the startup profile name.
     #[must_use]
     pub fn startup_profile_name(&self) -> &str {

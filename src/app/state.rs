@@ -50,6 +50,18 @@ impl AppData {
             settings,
         }
     }
+
+    /// Saves or updates the current state to the active profile if it is a custom profile.
+    pub fn auto_save_custom_profile(&mut self) {
+        let act_name = self.active_profile_name.clone();
+        let cur = self.current_state.clone();
+        if let Some(prof) = self.profile_manager.get_profile(&act_name)
+            && !prof.is_builtin
+        {
+            self.profile_manager
+                .save_or_update_current_state(&act_name, cur);
+        }
+    }
 }
 
 /// Thread-safe handle to application state.

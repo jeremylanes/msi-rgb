@@ -23,11 +23,11 @@ impl EffectSelector {
         container.set_hexpand(true);
 
         let effects = [
-            (EffectType::Static, "Static"),
-            (EffectType::Breathing, "Breathing"),
-            (EffectType::ColorCycle, "Color Cycle"),
-            (EffectType::Wave, "Wave"),
-            (EffectType::Off, "Off"),
+            (EffectType::Static, "💡 Static"),
+            (EffectType::Breathing, "🌊 Breathing"),
+            (EffectType::ColorCycle, "🔄 Color Cycle"),
+            (EffectType::Wave, "⚡ Dynamic Wave"),
+            (EffectType::Off, "🛑 Stealth Off"),
         ];
 
         let mut buttons = Vec::new();

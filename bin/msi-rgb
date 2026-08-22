@@ -14,10 +14,7 @@ if ! pgrep -f "openrgb.*--server" > /dev/null 2>&1; then
     sleep 0.5
 fi
 
-# Build release binary if not present
-if [ ! -f "${PROJECT_ROOT}/target/release/msi-rgb" ]; then
-    echo "[msi-rgb] Building release binary..."
-    cargo build --release --manifest-path "${PROJECT_ROOT}/Cargo.toml"
-fi
+# Always incrementally build latest changes into release binary
+cargo build --release --manifest-path "${PROJECT_ROOT}/Cargo.toml"
 
 exec "${PROJECT_ROOT}/target/release/msi-rgb" "$@"

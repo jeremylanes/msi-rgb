@@ -32,19 +32,19 @@ pub struct ZoneControlPanel {
 impl ZoneControlPanel {
     /// Creates a new `ZoneControlPanel`.
     pub fn new(callbacks: ZoneControlCallbacks) -> Self {
-        let container = GtkBox::new(Orientation::Vertical, 12);
+        let container = GtkBox::new(Orientation::Vertical, 8);
         let is_updating = Rc::new(RefCell::new(false));
 
         // 1. Zone Selection Tabs
-        let tabs_row = GtkBox::new(Orientation::Horizontal, 6);
+        let tabs_row = GtkBox::new(Orientation::Horizontal, 4);
         tabs_row.set_homogeneous(true);
 
         let tabs = [
-            (None, "⚡ All Zones (Sync)"),
-            (Some(ZoneId::Zone1), "Zone 1 (WASD)"),
+            (None, "⚡ All Zones"),
+            (Some(ZoneId::Zone1), "Z1 (WASD)"),
             (Some(ZoneId::Zone2), "Zone 2"),
             (Some(ZoneId::Zone3), "Zone 3"),
-            (Some(ZoneId::Zone4), "Zone 4 (Numpad)"),
+            (Some(ZoneId::Zone4), "Zone 4"),
         ];
 
         let mut zone_tab_buttons = Vec::new();
@@ -65,11 +65,11 @@ impl ZoneControlPanel {
         container.append(&tabs_row);
 
         // 2. Sliders Grid: Brightness & Speed
-        let sliders_row = GtkBox::new(Orientation::Horizontal, 16);
+        let sliders_row = GtkBox::new(Orientation::Horizontal, 10);
         sliders_row.set_homogeneous(true);
 
         // Brightness
-        let brightness_box = GtkBox::new(Orientation::Vertical, 4);
+        let brightness_box = GtkBox::new(Orientation::Vertical, 2);
         let brt_label = Label::new(Some("BRIGHTNESS"));
         brt_label.add_css_class("msi-card-header");
         brt_label.set_halign(gtk4::Align::Start);
@@ -93,7 +93,7 @@ impl ZoneControlPanel {
         sliders_row.append(&brightness_box);
 
         // Speed
-        let speed_box = GtkBox::new(Orientation::Vertical, 4);
+        let speed_box = GtkBox::new(Orientation::Vertical, 2);
         let spd_label = Label::new(Some("ANIMATION SPEED"));
         spd_label.add_css_class("msi-card-header");
         spd_label.set_halign(gtk4::Align::Start);
@@ -119,10 +119,10 @@ impl ZoneControlPanel {
         container.append(&sliders_row);
 
         // 3. Wave Direction Row
-        let direction_box = GtkBox::new(Orientation::Horizontal, 10);
+        let direction_box = GtkBox::new(Orientation::Horizontal, 8);
         direction_box.set_halign(gtk4::Align::Start);
 
-        let dir_label = Label::new(Some("Wave Direction:"));
+        let dir_label = Label::new(Some("Direction:"));
         dir_label.add_css_class("zone-sublabel");
         direction_box.append(&dir_label);
 

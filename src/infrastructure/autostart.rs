@@ -35,10 +35,11 @@ pub fn is_autostart_enabled() -> bool {
     autostart_desktop_path().exists() || systemd_user_service_path().exists()
 }
 
-/// Enables session autostart by writing `~/.config/autostart/msi-rgb.desktop`.
+/// Enables session autostart by writing both `~/.config/autostart/msi-rgb.desktop`
+/// and `~/.config/systemd/user/msi-rgb.service`.
 pub fn enable_autostart() -> Result<(), AppError> {
-    let path = autostart_desktop_path();
-    if let Some(parent) = path.parent() {
+    let desktop_path = autostart_desktop_path();
+    if let Some(parent) = desktop_path.parent() {
         fs::create_dir_all(parent).map_err(|e| {
             AppError::Persistence(format!(
                 "Failed to create autostart directory {parent:?}: {e}"
@@ -50,7 +51,7 @@ pub fn enable_autostart() -> Result<(), AppError> {
         .map(|p| p.to_string_lossy().to_string())
         .unwrap_or_else(|_| "msi-rgb".to_string());
 
-    let content = format!(
+    let desktop_content = format!(
         r#"[Desktop Entry]
 Type=Application
 Name=MSI Mystic Light RGB
@@ -64,21 +65,51 @@ StartupNotify=false
 "#
     );
 
-    fs::write(&path, content).map_err(|e| {
+    fs::write(&desktop_path, desktop_content).map_err(|e| {
         AppError::Persistence(format!("Failed to write autostart desktop file: {e}"))
     })?;
 
-    tracing::info!("Enabled autostart at {:?}", path);
+    // Also write systemd user unit if directory can be created
+    let systemd_path = systemd_user_service_path();
+    if let Some(parent) = systemd_path.parent()
+        && fs::create_dir_all(parent).is_ok()
+    {
+        let systemd_content = format!(
+            r#"[Unit]
+Description=MSI Mystic Light RGB Keyboard Lighting Controller
+After=graphical-session.target openrgb.service
+Wants=openrgb.service
+
+[Service]
+Type=simple
+ExecStart={exe_path} --daemon --apply-default
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=default.target
+"#
+        );
+        let _ = fs::write(&systemd_path, systemd_content);
+    }
+
+    tracing::info!("Enabled autostart at {:?}", desktop_path);
     Ok(())
 }
 
-/// Disables session autostart by removing the desktop entry.
+/// Disables session autostart by removing desktop entry and systemd unit.
 pub fn disable_autostart() -> Result<(), AppError> {
-    let path = autostart_desktop_path();
-    if path.exists() {
-        fs::remove_file(&path)
+    let desktop_path = autostart_desktop_path();
+    if desktop_path.exists() {
+        fs::remove_file(&desktop_path)
             .map_err(|e| AppError::Persistence(format!("Failed to remove autostart file: {e}")))?;
-        tracing::info!("Disabled autostart at {:?}", path);
+        tracing::info!("Disabled autostart at {:?}", desktop_path);
     }
+
+    let systemd_path = systemd_user_service_path();
+    if systemd_path.exists() {
+        let _ = fs::remove_file(&systemd_path);
+    }
+
     Ok(())
 }
