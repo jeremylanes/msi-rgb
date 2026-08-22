@@ -103,16 +103,21 @@ impl KeyboardPreview {
             inner_box.append(&desc_lbl);
 
             // Realistic 4x4 Mini Key Matrix
-            let matrix_box = GtkBox::new(Orientation::Vertical, 2);
-            matrix_box.set_halign(Align::Center);
+            let matrix_box = GtkBox::new(Orientation::Vertical, 3);
+            matrix_box.set_halign(Align::Fill);
+            matrix_box.set_hexpand(true);
             matrix_box.set_margin_top(4);
+            matrix_box.set_margin_start(6);
+            matrix_box.set_margin_end(6);
 
             for row in key_rows {
-                let row_box = GtkBox::new(Orientation::Horizontal, 2);
-                row_box.set_halign(Align::Center);
+                let row_box = GtkBox::new(Orientation::Horizontal, 3);
+                row_box.set_homogeneous(true);
+                row_box.set_hexpand(true);
                 for key in *row {
                     let key_lbl = Label::new(Some(*key));
                     key_lbl.add_css_class("keycap");
+                    key_lbl.set_hexpand(true);
                     if *key == "W" || *key == "A" || *key == "S" || *key == "D" {
                         key_lbl.add_css_class("keycap-wasd");
                     }

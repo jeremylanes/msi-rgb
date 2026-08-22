@@ -2,6 +2,10 @@
 
 A modern, Apple & DaVinci-grade Linux RGB keyboard controller in **Rust** and **GTK4**, designed to replace MSI Center / Mystic Light for laptops such as the **MSI Katana 15 HX B14WGK** (`MS-1565` / USB VID:PID `1462:1601`).
 
+<p align="center">
+  <img src="docs/images/screenshot.png" alt="MSI Mystic Light Studio Pro Screenshot" width="850">
+</p>
+
 ---
 
 ## 🌟 Key Features
