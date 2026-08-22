@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# MSI Mystic Light Configuration Backup Script
+# Creates a timestamped tar archive of ~/.config/msi-rgb/
+
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/msi-rgb"
+BACKUP_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/msi-rgb/backups"
+TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+
+if [ ! -d "${CONFIG_DIR}" ]; then
+    echo "[backup] Warning: Config directory ${CONFIG_DIR} does not exist yet."
+    exit 0
+fi
+
+mkdir -p "${BACKUP_DIR}"
+ARCHIVE_FILE="${BACKUP_DIR}/msi_rgb_backup_${TIMESTAMP}.tar.gz"
+
+tar -czf "${ARCHIVE_FILE}" -C "${CONFIG_DIR}" .
+echo "[backup] Successfully backed up ${CONFIG_DIR} to ${ARCHIVE_FILE}"
+ls -lh "${ARCHIVE_FILE}"

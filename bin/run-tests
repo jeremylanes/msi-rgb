@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# MSI Mystic Light Test Suite Runner
+# Executes unit tests, integration tests, doc-tests, formatting, and clippy checks.
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+cd "${PROJECT_ROOT}"
+
+echo "========================================="
+echo " 1. Running cargo fmt check..."
+echo "========================================="
+cargo fmt --check
+
+echo "========================================="
+echo " 2. Running cargo clippy (strict)..."
+echo "========================================="
+cargo clippy --all-targets --all-features -- -D warnings
+
+echo "========================================="
+echo " 3. Running unit & integration tests..."
+echo "========================================="
+cargo test --all-targets --all-features
+
+echo "========================================="
+echo " 4. Running documentation tests..."
+echo "========================================="
+cargo test --doc
+
+echo "========================================="
+echo " ALL TESTS PASSED CLEANLY (100% OK)"
+echo "========================================="

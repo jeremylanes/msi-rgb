@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="dragonRed" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF1744" />
+      <stop offset="100%" stop-color="#B71C1C" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  <rect x="8" y="24" width="112" height="80" rx="16" fill="#12161F" stroke="#2B3342" stroke-width="4"/>
+  <!-- 4 Zones -->
+  <rect x="16" y="32" width="22" height="64" rx="6" fill="url(#dragonRed)" opacity="0.9" filter="url(#glow)"/>
+  <rect x="42" y="32" width="22" height="64" rx="6" fill="#00E5FF" opacity="0.9" filter="url(#glow)"/>
+  <rect x="68" y="32" width="22" height="64" rx="6" fill="#FF00B4" opacity="0.9" filter="url(#glow)"/>
+  <rect x="94" y="32" width="18" height="64" rx="6" fill="#FFD600" opacity="0.9" filter="url(#glow)"/>
+  <!-- Keyboard Key Slots -->
+  <circle cx="27" cy="46" r="3" fill="#FFFFFF"/>
+  <circle cx="27" cy="64" r="3" fill="#FFFFFF"/>
+  <circle cx="53" cy="46" r="3" fill="#FFFFFF"/>
+  <circle cx="53" cy="64" r="3" fill="#FFFFFF"/>
+  <circle cx="79" cy="46" r="3" fill="#FFFFFF"/>
+  <circle cx="79" cy="64" r="3" fill="#FFFFFF"/>
+  <circle cx="103" cy="46" r="3" fill="#FFFFFF"/>
+  <circle cx="103" cy="64" r="3" fill="#FFFFFF"/>
+</svg>

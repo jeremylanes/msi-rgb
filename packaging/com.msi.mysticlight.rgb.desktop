@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=MSI Mystic Light RGB
+GenericName=RGB Keyboard Controller
+Comment=Native Linux RGB keyboard controller for MSI Katana 15 HX
+Exec=msi-rgb
+Icon=com.msi.mysticlight.rgb
+Terminal=false
+Categories=GTK;Settings;HardwareSettings;Utility;
+Keywords=MSI;Mystic;Light;RGB;Keyboard;Katana;
+StartupNotify=true

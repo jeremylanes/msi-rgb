@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# MSI Mystic Light RPM Packaging Script for Fedora
+# Prepares package hierarchy, desktop file, icon, and spec.
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+DIST_DIR="${PROJECT_ROOT}/target/dist"
+rm -rf "${DIST_DIR}"
+mkdir -p "${DIST_DIR}/usr/bin"
+mkdir -p "${DIST_DIR}/usr/share/applications"
+mkdir -p "${DIST_DIR}/usr/share/icons/hicolor/scalable/apps"
+
+echo "[package] Building optimized release binary..."
+cargo build --release --manifest-path "${PROJECT_ROOT}/Cargo.toml"
+
+cp "${PROJECT_ROOT}/target/release/msi-rgb" "${DIST_DIR}/usr/bin/msi-rgb"
+chmod +x "${DIST_DIR}/usr/bin/msi-rgb"
+
+# Create Desktop Entry
+cat << 'EOF' > "${DIST_DIR}/usr/share/applications/com.msi.mysticlight.rgb.desktop"
+[Desktop Entry]
+Type=Application
+Name=MSI Mystic Light RGB
+GenericName=RGB Keyboard Controller
+Comment=Native Linux RGB keyboard controller for MSI Katana 15 HX
+Exec=msi-rgb
+Icon=com.msi.mysticlight.rgb
+Terminal=false
+Categories=GTK;Settings;HardwareSettings;Utility;
+Keywords=MSI;Mystic;Light;RGB;Keyboard;Katana;
+StartupNotify=true
+EOF
+
+# Create SVG Icon
+cat << 'EOF' > "${DIST_DIR}/usr/share/icons/hicolor/scalable/apps/com.msi.mysticlight.rgb.svg"
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="dragonRed" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF1744" />
+      <stop offset="100%" stop-color="#B71C1C" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  <rect x="8" y="24" width="112" height="80" rx="16" fill="#12161F" stroke="#2B3342" stroke-width="4"/>
+  <!-- 4 Zones -->
+  <rect x="16" y="32" width="22" height="64" rx="6" fill="url(#dragonRed)" opacity="0.9" filter="url(#glow)"/>
+  <rect x="42" y="32" width="22" height="64" rx="6" fill="#00E5FF" opacity="0.9" filter="url(#glow)"/>
+  <rect x="68" y="32" width="22" height="64" rx="6" fill="#FF00B4" opacity="0.9" filter="url(#glow)"/>
+  <rect x="94" y="32" width="18" height="64" rx="6" fill="#FFD600" opacity="0.9" filter="url(#glow)"/>
+  <!-- Keyboard Key Slots -->
+  <circle cx="27" cy="46" r="3" fill="#FFFFFF"/>
+  <circle cx="27" cy="64" r="3" fill="#FFFFFF"/>
+  <circle cx="53" cy="46" r="3" fill="#FFFFFF"/>
+  <circle cx="53" cy="64" r="3" fill="#FFFFFF"/>
+  <circle cx="79" cy="46" r="3" fill="#FFFFFF"/>
+  <circle cx="79" cy="64" r="3" fill="#FFFFFF"/>
+  <circle cx="103" cy="46" r="3" fill="#FFFFFF"/>
+  <circle cx="103" cy="64" r="3" fill="#FFFFFF"/>
+</svg>
+EOF
+
+echo "[package] Package files staged in ${DIST_DIR}"
+ls -la "${DIST_DIR}/usr/bin"
+ls -la "${DIST_DIR}/usr/share/applications"
+ls -la "${DIST_DIR}/usr/share/icons/hicolor/scalable/apps"
