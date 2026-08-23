@@ -103,6 +103,9 @@ impl RgbService {
                 })?;
             app_data.active_profile_name = profile.name.clone();
             app_data.current_state = profile.state.clone();
+            let _ = app_data.profile_manager.set_startup_profile(name);
+            let store = app_data.profile_manager.store().clone();
+            let _ = self.storage.save_profiles(&store);
             profile.state
         };
 
@@ -121,7 +124,6 @@ impl RgbService {
 
         let mut active_state: Option<RgbState> = None;
         let mut current_hue = 0.0f64;
-        let mut flash_commit_deadline: Option<tokio::time::Instant> = None;
 
         // Initial connection
         Self::try_connect(&state, backend.as_mut()).await;
@@ -134,10 +136,6 @@ impl RgbService {
             };
             active_state = Some(initial_state.clone());
             let _ = backend.apply_state(&initial_state).await;
-            if initial_state.global_effect != EffectType::ColorCycle {
-                flash_commit_deadline =
-                    Some(tokio::time::Instant::now() + Duration::from_millis(1500));
-            }
         }
 
         let mut heartbeat_interval = tokio::time::interval(Duration::from_secs(3));
@@ -158,7 +156,6 @@ impl RgbService {
                             }
                             if backend.status().is_connected() {
                                 if is_anim {
-                                    flash_commit_deadline = None;
                                     let col = RgbColor::from_hsv(current_hue, 1.0, 1.0);
                                     let _ = backend.apply_global_mode(
                                         EffectType::Static,
@@ -172,8 +169,6 @@ impl RgbService {
                                     if let Err(e) = res {
                                         tracing::warn!("Failed to apply state: {e}");
                                         Self::update_status(&state, backend.status()).await;
-                                    } else {
-                                        flash_commit_deadline = Some(tokio::time::Instant::now() + Duration::from_millis(1500));
                                     }
                                 }
                             }
@@ -196,8 +191,6 @@ impl RgbService {
                                 if let Err(e) = res {
                                     tracing::warn!("Failed to apply zone {zid}: {e}");
                                     Self::update_status(&state, backend.status()).await;
-                                } else {
-                                    flash_commit_deadline = Some(tokio::time::Instant::now() + Duration::from_millis(1500));
                                 }
                             }
                         }
@@ -214,7 +207,6 @@ impl RgbService {
                                 }
                                 if backend.status().is_connected() {
                                     if is_anim {
-                                        flash_commit_deadline = None;
                                         let col = RgbColor::from_hsv(current_hue, 1.0, 1.0);
                                         let _ = backend.apply_global_mode(
                                             EffectType::Static,
@@ -225,7 +217,6 @@ impl RgbService {
                                         ).await;
                                     } else {
                                         let _ = backend.apply_state(&st).await;
-                                        flash_commit_deadline = Some(tokio::time::Instant::now() + Duration::from_millis(1500));
                                     }
                                 }
                             }
@@ -236,7 +227,6 @@ impl RgbService {
                         }
                         Some(ServiceCommand::Shutdown) | None => {
                             if backend.status().is_connected() {
-                                let _ = backend.save_to_flash().await;
                                 let _ = backend.disconnect().await;
                             }
                             tracing::info!("Service worker terminated");
@@ -253,8 +243,8 @@ impl RgbService {
                     {
                         let period_secs = match st.global_speed.as_percentage() {
                             0..=15 => 50.0,  // 50s imperceptible drift (Chameleon)
-                            16..=35 => 24.0, // 24s slow drift
-                            36..=55 => 10.0, // 10s smooth wave (Spectrum Harmony)
+                            16..=35 => 24.0, // 24s slow drift (Spectrum Harmony at 16)
+                            36..=55 => 10.0, // 10s smooth wave
                             56..=75 => 6.0,  // 6s brisk wave
                             76..=90 => 3.5,  // 3.5s fast
                             _ => 2.0,        // 2s ultra fast
@@ -275,27 +265,17 @@ impl RgbService {
                             .await;
                     }
                 }
-                _ = async {
-                    if let Some(deadline) = flash_commit_deadline {
-                        tokio::time::sleep_until(deadline).await;
-                    } else {
-                        std::future::pending::<()>().await;
-                    }
-                } => {
-                    flash_commit_deadline = None;
-                    if backend.status().is_connected() {
-                        let _ = backend.save_to_flash().await;
-                    }
-                }
                 _ = heartbeat_interval.tick() => {
                     // Periodic health check & auto-reconnect
                     if !backend.status().is_connected() {
                         tracing::debug!("Backend offline, attempting reconnect in background...");
                         if Self::try_connect(&state, backend.as_mut()).await {
                             backoff_secs = 1;
-                            if let Some(ref current_state) = active_state {
-                                let _ = backend.apply_state(current_state).await;
-                            }
+                            let current_state = {
+                                let data = state.read().await;
+                                data.current_state.clone()
+                            };
+                            let _ = backend.apply_state(&current_state).await;
                         } else {
                             backoff_secs = (backoff_secs * 2).min(MAX_BACKOFF_SECS);
                             tokio::time::sleep(Duration::from_secs(backoff_secs)).await;

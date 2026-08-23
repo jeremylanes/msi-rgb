@@ -378,7 +378,7 @@ impl RgbBackend for NativeHidBackend {
         }
 
         if state.sync_all_zones {
-            // Apply all 4 zones in a single hardware batch
+            // Apply all 4 zones in a single hardware batch (guarantees perfect clock synchronization)
             self.send_zone_selection(0x0F)?;
             self.send_effect_packet(
                 state.global_effect,
@@ -408,6 +408,7 @@ impl RgbBackend for NativeHidBackend {
             }
         }
 
+        let _ = self.save_to_flash().await;
         Ok(())
     }
 
@@ -436,6 +437,7 @@ impl RgbBackend for NativeHidBackend {
             config.direction,
         )?;
 
+        let _ = self.save_to_flash().await;
         Ok(())
     }
 

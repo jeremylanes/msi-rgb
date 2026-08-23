@@ -1,6 +1,8 @@
 //! Entry point for MSI Mystic Light RGB Linux controller.
 
 use clap::Parser;
+#[cfg(unix)]
+use std::os::unix::process::CommandExt;
 use std::sync::Arc;
 use tokio::runtime::Runtime;
 
@@ -121,21 +123,19 @@ fn main() {
                 }
             }
         });
+
         let is_dynamic = {
             let data = rt.block_on(async { state.read().await });
             data.current_state.global_effect == EffectType::ColorCycle
                 && data.current_state.sync_all_zones
         };
 
-        if !args.daemon && is_dynamic {
-            println!(
-                "Dynamic profile is actively cycling across all zones (Press Ctrl+C to stop)..."
-            );
-            rt.block_on(async move {
-                tokio::signal::ctrl_c().await.ok();
-            });
-            return;
-        } else if !args.daemon {
+        if !args.daemon {
+            if is_dynamic {
+                spawn_background_daemon();
+            } else {
+                stop_background_daemon();
+            }
             return;
         }
     }
@@ -166,20 +166,23 @@ fn main() {
                 && data.current_state.sync_all_zones
         };
 
-        if !args.daemon && is_dynamic {
-            rt.block_on(async move {
-                tokio::signal::ctrl_c().await.ok();
-            });
-            return;
-        } else if !args.daemon {
+        if !args.daemon {
+            if is_dynamic {
+                spawn_background_daemon();
+            } else {
+                stop_background_daemon();
+            }
             return;
         }
     }
 
     // Daemon mode (background service loop)
     if args.daemon {
-        tracing::info!("Running in background daemon mode. Press Ctrl+C to exit.");
+        let startup_name = profile_manager.startup_profile_name().to_string();
+        let s = service_arc.clone();
         rt.block_on(async move {
+            let _ = s.apply_profile(&startup_name).await;
+            tracing::info!("Running in background daemon mode. Press Ctrl+C to exit.");
             tokio::signal::ctrl_c().await.ok();
             tracing::info!("Shutdown signal received.");
         });
@@ -187,5 +190,46 @@ fn main() {
     }
 
     // Default: Run native GTK4 GUI
-    run_gui(state, service_arc, storage);
+    run_gui(state.clone(), service_arc, storage);
+
+    // After GUI closes: if current profile is dynamic, keep it running via background daemon
+    let is_dynamic = {
+        let data = rt.block_on(async { state.read().await });
+        data.current_state.global_effect == EffectType::ColorCycle
+            && data.current_state.sync_all_zones
+    };
+
+    if is_dynamic {
+        spawn_background_daemon();
+    } else {
+        stop_background_daemon();
+    }
+}
+
+fn spawn_background_daemon() {
+    stop_background_daemon();
+
+    if let Ok(exe) = std::env::current_exe() {
+        let mut cmd = std::process::Command::new(exe);
+        cmd.arg("--daemon")
+            .stdin(std::process::Stdio::null())
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null());
+
+        #[cfg(unix)]
+        unsafe {
+            cmd.pre_exec(|| {
+                libc::setsid();
+                Ok(())
+            });
+        }
+
+        let _ = cmd.spawn();
+    }
+}
+
+fn stop_background_daemon() {
+    let _ = std::process::Command::new("pkill")
+        .args(["-f", "msi-rgb.*--daemon"])
+        .output();
 }
