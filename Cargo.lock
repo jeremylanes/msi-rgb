@@ -654,6 +654,7 @@ dependencies = [
  "byteorder",
  "clap",
  "gtk4",
+ "libc",
  "openrgb2",
  "serde",
  "serde_json",

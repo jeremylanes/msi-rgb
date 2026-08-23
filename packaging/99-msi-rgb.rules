@@ -1,0 +1,8 @@
+# MSI Katana 15 HX (MS-1565) MysticLight RGB Keyboard USB HID Rules
+# Allows non-root users full access to keyboard RGB feature reports
+
+# USB Device access
+SUBSYSTEM=="usb", ATTRS{idVendor}=="1462", ATTRS{idProduct}=="1601", MODE="0666", TAG+="uaccess"
+
+# HIDRaw Device access
+KERNEL=="hidraw*", ATTRS{idVendor}=="1462", ATTRS{idProduct}=="1601", MODE="0666", TAG+="uaccess"

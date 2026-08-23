@@ -314,6 +314,13 @@ perform_installation() {
         sudo install -m 755 "${PROJECT_ROOT}/target/release/msi-rgb" "${BIN_DIR}/msi-rgb"
         sudo install -m 644 "${PROJECT_ROOT}/packaging/com.msi.mysticlight.rgb.desktop" "${APP_DIR}/com.msi.mysticlight.rgb.desktop"
         sudo install -m 644 "${PROJECT_ROOT}/packaging/com.msi.mysticlight.rgb.svg" "${ICON_DIR}/com.msi.mysticlight.rgb.svg"
+        if [ -f "${PROJECT_ROOT}/packaging/99-msi-rgb.rules" ]; then
+            sudo install -m 644 "${PROJECT_ROOT}/packaging/99-msi-rgb.rules" "/etc/udev/rules.d/99-msi-rgb.rules"
+            if command -v udevadm >/dev/null 2>&1; then
+                sudo udevadm control --reload-rules >/dev/null 2>&1 || true
+                sudo udevadm trigger >/dev/null 2>&1 || true
+            fi
+        fi
         if command -v update-desktop-database >/dev/null 2>&1; then
             sudo update-desktop-database "${APP_DIR}" >/dev/null 2>&1 || true
         fi
@@ -337,7 +344,7 @@ perform_installation() {
 Type=Application
 Name=MSI Mystic Light RGB Daemon
 Comment=Auto-restore RGB lighting state on login
-Exec=msi-rgb --apply-default --daemon
+Exec=msi-rgb --apply-default
 Hidden=false
 NoDisplay=true
 X-GNOME-Autostart-enabled=true
@@ -347,14 +354,12 @@ EOF
     cat << EOF > "${HOME}/.config/systemd/user/msi-rgb.service"
 [Unit]
 Description=MSI Mystic Light RGB Keyboard Lighting Controller
-After=graphical-session.target openrgb.service
-Wants=openrgb.service
+After=graphical-session.target
 
 [Service]
-Type=simple
-ExecStart=${BIN_DIR}/msi-rgb --daemon --apply-default
-Restart=on-failure
-RestartSec=5s
+Type=oneshot
+ExecStart=${BIN_DIR}/msi-rgb --apply-default
+RemainAfterExit=true
 
 [Install]
 WantedBy=default.target

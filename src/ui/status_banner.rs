@@ -73,7 +73,7 @@ impl StatusBanner {
                 self.reconnect_button.set_visible(false);
             }
             BackendStatus::Disconnected { reason } => {
-                self.status_label.set_text("○ OpenRGB Offline");
+                self.status_label.set_text("○ Hardware Offline");
                 self.status_label.add_css_class("disconnected");
                 self.status_label.set_tooltip_text(Some(reason));
                 self.reconnect_button.set_visible(true);
