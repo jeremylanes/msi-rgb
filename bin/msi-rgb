@@ -7,12 +7,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-# Ensure OpenRGB server is running in the background if not already started
-if ! pgrep -f "openrgb.*--server" > /dev/null 2>&1; then
-    echo "[msi-rgb] Starting background OpenRGB SDK server..."
-    openrgb --server --noautoconnect > /dev/null 2>&1 &
-    sleep 0.5
-fi
+# Direct execution of MSI Mystic Light Native RGB Controller
 
 # Always incrementally build latest changes into release binary
 cargo build --release --manifest-path "${PROJECT_ROOT}/Cargo.toml"

@@ -110,4 +110,9 @@ pub trait RgbBackend: Send + Sync {
         speed: Speed,
         direction: Direction,
     ) -> Result<(), BackendError>;
+
+    /// Commits the active lighting configuration to persistent hardware flash memory.
+    async fn save_to_flash(&mut self) -> Result<(), BackendError> {
+        Ok(())
+    }
 }

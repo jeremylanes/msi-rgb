@@ -37,10 +37,20 @@ impl ProfileManager {
     /// Wraps an existing `ProfileStore`.
     #[must_use]
     pub fn from_store(mut store: ProfileStore) -> Self {
-        // Ensure default factory profiles exist if empty
-        if store.profiles.is_empty() {
-            for p in create_default_profiles() {
-                let _ = store.add_profile(p);
+        // Ensure all built-in factory profiles exist and update built-ins to latest definitions
+        for default_profile in create_default_profiles() {
+            if let Some(existing) = store
+                .profiles
+                .iter_mut()
+                .find(|p| p.name == default_profile.name && p.is_builtin)
+            {
+                *existing = default_profile;
+            } else if !store
+                .profiles
+                .iter()
+                .any(|p| p.name == default_profile.name)
+            {
+                let _ = store.add_profile(default_profile);
             }
         }
         Self { store }

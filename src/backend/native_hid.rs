@@ -47,6 +47,7 @@ pub struct NativeHidBackend {
     device_path: Option<PathBuf>,
     device_file: Option<File>,
     status: BackendStatus,
+    current_zone_mask: Option<u8>,
 }
 
 impl NativeHidBackend {
@@ -59,6 +60,7 @@ impl NativeHidBackend {
             status: BackendStatus::Disconnected {
                 reason: "Not connected".to_string(),
             },
+            current_zone_mask: None,
         }
     }
 
@@ -124,18 +126,24 @@ impl NativeHidBackend {
         Ok(())
     }
 
-    /// Sends a zone selection packet (Packet ID 1).
+    /// Sends a zone selection packet (Packet ID 1) only if the zone mask has changed.
     ///
     /// Bit 0: Zone 1 (WASD)
     /// Bit 1: Zone 2 (Alpha)
     /// Bit 2: Zone 3 (Nav)
     /// Bit 3: Zone 4 (Numpad)
-    fn send_zone_selection(&self, zone_mask: u8) -> Result<(), BackendError> {
+    fn send_zone_selection(&mut self, zone_mask: u8) -> Result<(), BackendError> {
+        if self.current_zone_mask == Some(zone_mask) {
+            return Ok(());
+        }
+
         let mut pkt = [0u8; 64];
         pkt[0] = 0x02; // Report ID
         pkt[1] = 0x01; // Packet ID: Zone selection
         pkt[2] = zone_mask;
-        self.send_feature_report(&pkt)
+        self.send_feature_report(&pkt)?;
+        self.current_zone_mask = Some(zone_mask);
+        Ok(())
     }
 
     /// Sends the effect configuration packet (Packet ID 2).
@@ -157,13 +165,15 @@ impl NativeHidBackend {
         let g = ((color.g as f32) * b_factor).round() as u8;
         let b = ((color.b as f32) * b_factor).round() as u8;
 
-        // Speed conversion: mapped to centiseconds (300..1200 cs)
+        // Speed conversion: mapped to centiseconds (300..2400 cs)
+        // Lower percentage = slower, more subtle and imperceptible drift
         let speed_val: u16 = match speed.as_percentage() {
-            0..=20 => 1200,
-            21..=40 => 900,
-            41..=60 => 600,
-            61..=80 => 400,
-            _ => 300,
+            0..=12 => 2400,  // 24 seconds ultra-slow imperceptible morph
+            13..=25 => 1800, // 18 seconds slow drift
+            26..=40 => 1200, // 12 seconds
+            41..=60 => 800,  // 8 seconds (balanced default)
+            61..=80 => 500,  // 5 seconds
+            _ => 300,        // 3 seconds fast
         };
 
         let dir_byte: u8 = match direction {
@@ -238,15 +248,17 @@ impl NativeHidBackend {
                 pkt[7] = 15;
                 pkt[8] = 1;
                 pkt[9] = dir_byte;
-                // Spectrum keyframes scaled by brightness
+                // Seamless 8-point 360° chromatic loop scaled by brightness
+                // Loops back from Red to Red with zero jump and zero blackout
                 let spectrum = [
                     (0, 255, 0, 0),    // Red
-                    (17, 255, 255, 0), // Yellow
-                    (33, 0, 255, 0),   // Green
-                    (50, 0, 255, 255), // Cyan
-                    (67, 0, 0, 255),   // Blue
-                    (83, 255, 0, 255), // Magenta
-                    (100, 255, 0, 0),  // Red loop
+                    (14, 255, 120, 0), // Warm Amber
+                    (28, 255, 230, 0), // Yellow
+                    (42, 0, 255, 40),  // Emerald Green
+                    (57, 0, 210, 255), // Glacial Cyan
+                    (71, 10, 80, 255), // Royal Blue
+                    (85, 210, 0, 255), // Neon Magenta
+                    (100, 255, 0, 0),  // Red (Seamless loop point)
                 ];
                 let mut offset = 10;
                 for (t, cr, cg, cb) in spectrum {
@@ -285,17 +297,6 @@ impl NativeHidBackend {
         }
 
         self.send_feature_report(&pkt)
-    }
-
-    /// Sends a save to flash packet (Packet ID 0xA0) so the hardware
-    /// retains the RGB configuration automatically upon reboot.
-    fn save_to_flash(&self) -> Result<(), BackendError> {
-        let mut pkt = [0u8; 64];
-        pkt[0] = 0x02; // Report ID
-        pkt[1] = 0xA0; // Packet ID: Save to Flash
-        self.send_feature_report(&pkt)?;
-        debug!("MSI keyboard configuration successfully saved to hardware flash");
-        Ok(())
     }
 }
 
@@ -348,6 +349,7 @@ impl RgbBackend for NativeHidBackend {
 
     async fn disconnect(&mut self) -> Result<(), BackendError> {
         self.device_file = None;
+        self.current_zone_mask = None;
         self.status = BackendStatus::Disconnected {
             reason: "User disconnected".to_string(),
         };
@@ -406,8 +408,6 @@ impl RgbBackend for NativeHidBackend {
             }
         }
 
-        // Commit state to hardware flash memory for permanent reboot persistence
-        let _ = self.save_to_flash();
         Ok(())
     }
 
@@ -436,7 +436,6 @@ impl RgbBackend for NativeHidBackend {
             config.direction,
         )?;
 
-        let _ = self.save_to_flash();
         Ok(())
     }
 
@@ -454,7 +453,19 @@ impl RgbBackend for NativeHidBackend {
 
         self.send_zone_selection(0x0F)?;
         self.send_effect_packet(effect, color, brightness, speed, direction)?;
-        let _ = self.save_to_flash();
+        Ok(())
+    }
+
+    async fn save_to_flash(&mut self) -> Result<(), BackendError> {
+        if self.device_file.is_none() {
+            self.connect().await?;
+        }
+
+        let mut pkt = [0u8; 64];
+        pkt[0] = 0x02; // Report ID
+        pkt[1] = 0xA0; // Packet ID: Save to Flash
+        self.send_feature_report(&pkt)?;
+        debug!("MSI keyboard configuration successfully saved to hardware flash");
         Ok(())
     }
 }

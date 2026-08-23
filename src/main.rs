@@ -5,6 +5,7 @@ use std::sync::Arc;
 use tokio::runtime::Runtime;
 
 use msi_rgb::app::{RgbService, create_app_state};
+use msi_rgb::domain::EffectType;
 use msi_rgb::infrastructure::init_logging;
 use msi_rgb::persistence::Storage;
 use msi_rgb::profiles::ProfileManager;
@@ -65,6 +66,7 @@ fn main() {
     };
 
     let profile_manager = ProfileManager::from_store(store);
+    let _ = storage.save_profiles(profile_manager.store());
 
     // Command line: List profiles
     if args.list_profiles {
@@ -119,7 +121,21 @@ fn main() {
                 }
             }
         });
-        if !args.daemon {
+        let is_dynamic = {
+            let data = rt.block_on(async { state.read().await });
+            data.current_state.global_effect == EffectType::ColorCycle
+                && data.current_state.sync_all_zones
+        };
+
+        if !args.daemon && is_dynamic {
+            println!(
+                "Dynamic profile is actively cycling across all zones (Press Ctrl+C to stop)..."
+            );
+            rt.block_on(async move {
+                tokio::signal::ctrl_c().await.ok();
+            });
+            return;
+        } else if !args.daemon {
             return;
         }
     }
@@ -143,7 +159,19 @@ fn main() {
                 }
             }
         });
-        if !args.daemon {
+
+        let is_dynamic = {
+            let data = rt.block_on(async { state.read().await });
+            data.current_state.global_effect == EffectType::ColorCycle
+                && data.current_state.sync_all_zones
+        };
+
+        if !args.daemon && is_dynamic {
+            rt.block_on(async move {
+                tokio::signal::ctrl_c().await.ok();
+            });
+            return;
+        } else if !args.daemon {
             return;
         }
     }
