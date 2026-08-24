@@ -13,7 +13,6 @@ BuildRequires:  gtk4-devel
 BuildRequires:  desktop-file-utils
 
 Requires:       gtk4
-Requires:       openrgb >= 0.9
 
 %description
 A modern, native Rust and GTK4 application for controlling 4-zone RGB keyboards

@@ -7,7 +7,7 @@
 //!
 //! The application is structured into decoupled layers:
 //! - [`domain`]: Core types (`RgbColor`, `EffectType`, `ZoneId`, `RgbState`, `UserProfile`)
-//! - [`backend`]: Hardware driver abstraction trait (`RgbBackend`), `OpenRgbBackend`, and `MockBackend`
+//! - [`backend`]: Hardware driver abstraction trait (`RgbBackend`), `NativeHidBackend`, and `MockBackend`
 //! - [`effects`]: Lighting effect models and preset palettes
 //! - [`profiles`]: Preset management, default factory presets, and profile storage
 //! - [`persistence`]: XDG-compliant atomic JSON file storage

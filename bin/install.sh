@@ -148,16 +148,14 @@ install_system_dependencies() {
     # Check if dependencies are already satisfied
     local HAS_GTK=false
     local HAS_CAIRO=false
-    local HAS_OPENRGB=false
 
     if command -v pkg-config >/dev/null 2>&1; then
         if pkg-config --exists gtk4; then HAS_GTK=true; fi
         if pkg-config --exists cairo; then HAS_CAIRO=true; fi
     fi
-    if command -v openrgb >/dev/null 2>&1; then HAS_OPENRGB=true; fi
 
-    if [ "$HAS_GTK" = true ] && [ "$HAS_CAIRO" = true ] && [ "$HAS_OPENRGB" = true ]; then
-        log_success "Core build & runtime dependencies (GTK4, Cairo, OpenRGB) are already satisfied."
+    if [ "$HAS_GTK" = true ] && [ "$HAS_CAIRO" = true ]; then
+        log_success "Core build & runtime dependencies (GTK4, Cairo) are already satisfied."
         return 0
     fi
 
@@ -181,7 +179,6 @@ install_system_dependencies() {
             glib2-devel \
             pkgconf-pkg-config \
             gcc \
-            openrgb \
             cargo \
             rust || true
     elif command -v apt-get >/dev/null 2>&1; then
@@ -193,7 +190,6 @@ install_system_dependencies() {
             libglib2.0-dev \
             pkg-config \
             build-essential \
-            openrgb \
             cargo \
             rustc || true
     elif command -v pacman >/dev/null 2>&1; then
@@ -204,7 +200,6 @@ install_system_dependencies() {
             glib2 \
             pkgconf \
             base-devel \
-            openrgb \
             rust || true
     elif command -v zypper >/dev/null 2>&1; then
         log_info "Installing build and runtime dependencies via Zypper..."
@@ -214,12 +209,11 @@ install_system_dependencies() {
             glib2-devel \
             pkg-config \
             gcc \
-            openrgb \
             cargo \
             rust || true
     else
         log_warn "No supported package manager detected (dnf, apt, pacman, zypper)."
-        log_warn "Please ensure GTK4, Cairo, GLib, pkg-config, Rust, and OpenRGB are installed."
+        log_warn "Please ensure GTK4, Cairo, GLib, pkg-config, and Rust are installed."
     fi
 }
 

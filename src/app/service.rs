@@ -4,7 +4,7 @@ use std::time::Duration;
 use tokio::sync::mpsc;
 
 use super::state::AppStateHandle;
-use crate::backend::{BackendStatus, MockBackend, NativeHidBackend, OpenRgbBackend, RgbBackend};
+use crate::backend::{BackendStatus, MockBackend, NativeHidBackend, RgbBackend};
 use crate::domain::color::RgbColor;
 use crate::domain::device::RgbState;
 use crate::domain::effect::EffectType;
@@ -54,16 +54,8 @@ impl RgbService {
             let backend: Box<dyn RgbBackend> = if use_mock {
                 Box::new(MockBackend::new())
             } else {
-                let mut native = NativeHidBackend::new();
-                if native.connect().await.is_ok() {
-                    tracing::info!(
-                        "Using Direct Native HID backend (no OpenRGB required, onboard flash persistence)"
-                    );
-                    Box::new(native)
-                } else {
-                    tracing::info!("Direct HID not accessible; falling back to OpenRGB SDK daemon");
-                    Box::new(OpenRgbBackend::default_local())
-                }
+                tracing::info!("Using Direct Native Linux HID backend (onboard flash persistence)");
+                Box::new(NativeHidBackend::new())
             };
 
             Self::run_worker(state, backend, rx).await;

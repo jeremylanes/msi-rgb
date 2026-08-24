@@ -26,16 +26,15 @@ A modern, Apple & DaVinci-grade Linux RGB keyboard controller in **Rust** and **
 * **Real-time Dynamic Lighting Visualizer**: Interactive visual preview with authentic chiclet key matrix and multi-layered underglow that reacts dynamically to colors, brightness, and animations.
 * **Direct Native Linux HID Driver (Zero External Dependencies)**:
   * Communicates directly with the MSI keyboard microcontroller via `/dev/hidraw*` using reverse-engineered HID Feature Reports (`HIDIOCSFEATURE`).
-  * **No OpenRGB daemon required** — instant connection (<1ms) and 100% native Rust.
-  * Automatic fallback to OpenRGB SDK daemon if running in non-HID environments.
+  * Instant connection (<1ms) and 100% native Rust.
 * **Hardware Onboard Flash Persistence Across Reboots**:
   * Emits packet `0xA0` (Save to Flash) whenever colors or effects change.
   * **The keyboard hardware itself saves your configuration in internal EEPROM/Flash memory**: when your PC boots or restarts, the keyboard powers on with your chosen lighting at the BIOS / UEFI level without needing any background daemon!
 * **Factory & Custom Profiles Studio**:
-  * Built-in presets: *Gaming Red*, *Cyberpunk Neon*, *Matrix Code*, *Arctic Ice*, *Night Shift*, *Rainbow Wave*, *Stealth Off*.
+  * Built-in presets: *Spectrum Harmony*, *Chameleon Flow*, *Gaming Red*, *Cyberpunk Neon*, *Synthwave 84*, *Tokyo Night*, *Sunset Horizon*, *Matrix Code*, *Arctic Ice*, *Night Shift*, *Rainbow Wave*, *Stealth Off*.
   * Create, duplicate, delete, and designate startup default profiles with 4-zone preview dots.
-* **Decoupled Architecture**: Fully isolated Domain and Backend layers with `RgbBackend` trait abstraction (supporting live `OpenRgbBackend` and `MockBackend`).
-* **Zero Root / Sudo Required**: Communicates safely with the local OpenRGB SDK daemon over TCP socket.
+* **Decoupled Architecture**: Fully isolated Domain and Backend layers with `RgbBackend` trait abstraction (supporting `NativeHidBackend` and `MockBackend`).
+* **Zero Root / Sudo Required**: Direct non-root `/dev/hidraw*` access configured via udev rules.
 
 ---
 
@@ -77,9 +76,9 @@ msi-rgb
 ./bin/msi-rgb --list-profiles
 
 # Apply a profile instantly and exit
-./bin/msi-rgb --profile "Cyberpunk Neon"
+./bin/msi-rgb --profile "Spectrum Harmony"
 
-# Apply startup default profile (auto-retries until OpenRGB daemon is ready)
+# Apply startup default profile
 ./bin/msi-rgb --apply-default
 
 # Run in offline simulation mock mode
@@ -93,10 +92,10 @@ msi-rgb
 Add the following to your `hyprland.conf`:
 ```ini
 # Fast RGB Profile Switching
-bind = $mainMod, F5, exec, /path/to/msi-rgb/bin/msi-rgb --profile "Gaming Red"
-bind = $mainMod, F6, exec, /path/to/msi-rgb/bin/msi-rgb --profile "Cyberpunk Neon"
-bind = $mainMod, F7, exec, /path/to/msi-rgb/bin/msi-rgb --profile "Night Shift"
-bind = $mainMod, F8, exec, /path/to/msi-rgb/bin/msi-rgb --profile "Stealth Off"
+bind = $mainMod, F5, exec, msi-rgb --profile "Spectrum Harmony"
+bind = $mainMod, F6, exec, msi-rgb --profile "Cyberpunk Neon"
+bind = $mainMod, F7, exec, msi-rgb --profile "Night Shift"
+bind = $mainMod, F8, exec, msi-rgb --profile "Stealth Off"
 ```
 
 ---
@@ -112,13 +111,14 @@ msi_rgb/
 │   └── backup-config    # Configuration backup archiver
 ├── packaging/
 │   ├── msi-rgb.spec     # RPM package specification
+│   ├── 99-msi-rgb.rules # Linux udev rule for non-root hidraw access
 │   ├── com.msi.mysticlight.rgb.desktop
 │   └── com.msi.mysticlight.rgb.svg
 ├── src/
 │   ├── main.rs          # CLI argument parser and runtime entry point
 │   ├── lib.rs           # Core library exports
 │   ├── domain/          # Pure business logic (Color with HSV, Effect, Zone, Device, Profile)
-│   ├── backend/         # Hardware abstraction (RgbBackend trait, OpenRGB SDK, Mock)
+│   ├── backend/         # Hardware abstraction (RgbBackend trait, Native Linux HID, Mock)
 │   ├── effects/         # Effect models and color palettes
 │   ├── profiles/        # Preset management and factory profiles
 │   ├── persistence/     # Atomic XDG storage with schema migration

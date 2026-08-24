@@ -496,7 +496,7 @@ impl MainWindow {
         });
     }
 
-    /// Starts a background GLib timer to sync UI with state updates without polling OpenRGB directly.
+    /// Starts a background GLib timer to sync UI with state updates without polling hardware directly.
     fn start_state_polling(this: &Rc<RefCell<Self>>) {
         let this_clone = this.clone();
         glib::timeout_add_local(Duration::from_millis(250), move || {

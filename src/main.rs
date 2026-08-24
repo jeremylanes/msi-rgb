@@ -23,7 +23,7 @@ use msi_rgb::ui::run_gui;
     about = "Native Linux RGB keyboard controller for MSI Katana 15 HX (MS-1565 / 1462:1601)"
 )]
 struct CliArgs {
-    /// Run with mock hardware backend (offline simulation without OpenRGB).
+    /// Run with mock hardware backend (offline simulation without physical hardware).
     #[arg(long)]
     mock: bool,
 

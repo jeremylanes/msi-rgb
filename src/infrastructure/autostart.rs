@@ -77,8 +77,7 @@ StartupNotify=false
         let systemd_content = format!(
             r#"[Unit]
 Description=MSI Mystic Light RGB Keyboard Lighting Controller
-After=graphical-session.target openrgb.service
-Wants=openrgb.service
+After=graphical-session.target
 
 [Service]
 Type=simple

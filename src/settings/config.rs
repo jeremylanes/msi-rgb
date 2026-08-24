@@ -14,7 +14,6 @@ use crate::persistence::Storage;
 ///
 /// let settings = AppSettings::default();
 /// assert!(settings.autostart);
-/// assert_eq!(settings.openrgb_port, 6742);
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AppSettings {
@@ -22,10 +21,6 @@ pub struct AppSettings {
     pub autostart: bool,
     /// Name of profile to apply at session startup.
     pub startup_profile: String,
-    /// OpenRGB SDK server host address.
-    pub openrgb_host: String,
-    /// OpenRGB SDK server port.
-    pub openrgb_port: u16,
     /// Whether to force the MockBackend (for simulation / testing).
     pub use_mock_backend: bool,
     /// UI slider / color change debounce delay in milliseconds.
@@ -39,8 +34,6 @@ impl Default for AppSettings {
         Self {
             autostart: true,
             startup_profile: "Gaming Red".to_string(),
-            openrgb_host: "127.0.0.1".to_string(),
-            openrgb_port: 6742,
             use_mock_backend: false,
             debounce_ms: 120,
             start_minimized: false,

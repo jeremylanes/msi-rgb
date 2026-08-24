@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# MSI Mystic Light RGB Controller Launcher
-# Ensures OpenRGB server is accessible and launches msi-rgb.
+# MSI Mystic Light Native Linux RGB Controller Launcher
+# Directly communicates with hardware via Linux HID.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"

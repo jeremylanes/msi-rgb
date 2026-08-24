@@ -1,7 +1,7 @@
 //! Backend trait definition and connection status models.
 //!
 //! Provides the abstract `RgbBackend` trait allowing the application and domain
-//! layers to interact with RGB hardware without depending directly on OpenRGB or HID.
+//! layers to interact with RGB hardware.
 
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
@@ -75,7 +75,7 @@ impl BackendStatus {
 
 /// Abstract asynchronous interface for RGB hardware control.
 ///
-/// All hardware backends (OpenRGB SDK, Mock backend for testing, or future direct HID)
+/// All hardware backends (Native HID backend or Mock backend for testing)
 /// implement this trait.
 #[async_trait]
 pub trait RgbBackend: Send + Sync {

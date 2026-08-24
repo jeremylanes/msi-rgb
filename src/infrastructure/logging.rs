@@ -14,7 +14,7 @@ use tracing_subscriber::util::SubscriberInitExt;
 /// ```
 pub fn init_logging(debug: bool) {
     let filter = if debug {
-        EnvFilter::new("msi_rgb=debug,openrgb=debug,info")
+        EnvFilter::new("msi_rgb=debug,info")
     } else {
         EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("msi_rgb=info,warn"))
     };
