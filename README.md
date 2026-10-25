@@ -38,9 +38,17 @@ A modern, Apple & DaVinci-grade Linux RGB keyboard controller in **Rust** and **
 
 ---
 
-## 📦 Automated Installation
+## 📦 Installation
 
-### 1-Line Installer via `curl` (Recommended)
+### From crates.io (Cargo)
+
+```bash
+cargo install msi-rgb
+```
+
+*(Note: Requires GTK4 development headers on your system, e.g. `sudo dnf install gtk4-devel` on Fedora or `sudo apt install libgtk-4-dev` on Ubuntu/Debian).*
+
+### 1-Line Installer via `curl`
 
 Install dependencies, compile, and configure the desktop application and autostart in a single command:
 

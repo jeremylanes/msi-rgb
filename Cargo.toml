@@ -2,6 +2,12 @@
 name = "msi-rgb"
 version = "0.1.0"
 edition = "2024"
+description = "Native Linux RGB keyboard controller for MSI Katana 15 HX laptops"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/jeremylanes/msi-rgb"
+readme = "README.md"
+keywords = ["msi", "rgb", "keyboard", "katana", "linux"]
+categories = ["command-line-utilities", "hardware-support"]
 
 [dependencies]
 anyhow = "1.0.104"
