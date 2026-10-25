@@ -1,147 +1,120 @@
-# MSI Mystic Light Linux RGB Controller
-
-A modern, Apple & DaVinci-grade Linux RGB keyboard controller in **Rust** and **GTK4**, designed to replace MSI Center / Mystic Light for laptops such as the **MSI Katana 15 HX B14WGK** (`MS-1565` / USB VID:PID `1462:1601`).
-
 <p align="center">
-  <img src="docs/images/screenshot.png" alt="MSI Mystic Light Studio Pro Screenshot" width="850">
+  <img src="assets/logo.svg" alt="msi-rgb logo" width="130" height="130" />
 </p>
 
----
+# msi-rgb
 
-## 🌟 Key Features
+> Native Linux RGB keyboard controller for MSI Katana 15 HX laptops.
 
-* **Apple & DaVinci-Grade UI Design**: Ultra-refined glassmorphism, frosted dark card surfaces (`backdrop-filter`), luminescent accents, responsive layout, and high-DPI typography.
-* **Interactive Cairo HSV Color Wheel**:
-  * Real-time continuous 360° Hue and radial Saturation disc with smooth reticle tracking.
-  * Dedicated Lightness / Value slider with live color preview.
-  * Direct `#RRGGBB` Hex entry with instant bidirectional sync.
-  * Precise RGB channel SpinButtons (0..255).
-  * Curated Pro Studio & Gaming preset palette (MSI Dragon Red, Cyber Cyan, Neon Magenta, Matrix Emerald, Vaporwave Pink, Glacier Blue, Toxic Lime, Tokyo Indigo, Warm 2700K, Daylight 6500K).
-  * Customizable **Favorites Swatches Bar** to bookmark and recall custom user colors.
-* **4-Zone Independent & Synchronized Control**:
-  * Zone 1 (WASD & Gaming Left cluster)
-  * Zone 2 (Center Alpha)
-  * Zone 3 (Navigation & Return)
-  * Zone 4 (Numpad)
-* **Real-time Dynamic Lighting Visualizer**: Interactive visual preview with authentic chiclet key matrix and multi-layered underglow that reacts dynamically to colors, brightness, and animations.
-* **Direct Native Linux HID Driver (Zero External Dependencies)**:
-  * Communicates directly with the MSI keyboard microcontroller via `/dev/hidraw*` using reverse-engineered HID Feature Reports (`HIDIOCSFEATURE`).
-  * Instant connection (<1ms) and 100% native Rust.
-* **Hardware Onboard Flash Persistence Across Reboots**:
-  * Emits packet `0xA0` (Save to Flash) whenever colors or effects change.
-  * **The keyboard hardware itself saves your configuration in internal EEPROM/Flash memory**: when your PC boots or restarts, the keyboard powers on with your chosen lighting at the BIOS / UEFI level without needing any background daemon!
-* **Factory & Custom Profiles Studio**:
-  * Built-in presets: *Spectrum Harmony*, *Chameleon Flow*, *Gaming Red*, *Cyberpunk Neon*, *Synthwave 84*, *Tokyo Night*, *Sunset Horizon*, *Matrix Code*, *Arctic Ice*, *Night Shift*, *Rainbow Wave*, *Stealth Off*.
-  * Create, duplicate, delete, and designate startup default profiles with 4-zone preview dots.
-* **Decoupled Architecture**: Fully isolated Domain and Backend layers with `RgbBackend` trait abstraction (supporting `NativeHidBackend` and `MockBackend`).
-* **Zero Root / Sudo Required**: Direct non-root `/dev/hidraw*` access configured via udev rules.
+[![Crates.io](https://img.shields.io/crates/v/msi-rgb?style=flat-square&color=ff1744)](https://crates.io/crates/msi-rgb)
+[![CI Status](https://img.shields.io/github/actions/workflow/status/jeremylanes/msi-rgb/ci.yml?branch=main&style=flat-square)](https://github.com/jeremylanes/msi-rgb/actions)
+[![License](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue?style=flat-square)](LICENSE)
+[![Docs & Live Visualizer](https://img.shields.io/badge/Docs-Live%20Visualizer-blueviolet?style=flat-square)](https://jeremylanes.github.io/msi-rgb/)
 
 ---
 
-## 📦 Installation
+## Overview
 
-### From crates.io (Cargo)
+When switching to Linux (Fedora) on a new MSI Katana 15 HX (B14WGK / MS-1565 / `1462:1601`), there was no native Linux utility to control the 4-zone RGB keyboard backlighting. Proprietary vendor software is Windows-only, and generic third-party tools lack direct hardware HID support for this microcontroller.
+
+`msi-rgb` restores complete hardware control on Linux with zero bloat:
+
+- **Direct Linux HID Driver**: Interacts directly with `/dev/hidraw*` via reverse-engineered Feature Reports (`0x01`, `0x02`, `0xA0`). Instant connection (&lt;1ms) with zero background daemon required.
+- **Hardware Flash Persistence**: Emits packet `0xA0` to save colors into keyboard internal EEPROM/Flash. Lighting persists across reboots, shutdowns, and powers on at the BIOS/UEFI level without any software running.
+- **Whole-Keyboard Synchronization**: Eliminates internal MCU phase-delay drift by driving Mode 1 Steady synchronously across all 4 zones (`0x0F`) at 33 FPS for butter-smooth color cycles.
+- **Dual Interface**: Includes a modern GTK4 GUI with interactive chiclet key visualizer, alongside a robust CLI designed for terminal users and window manager keybinds.
+- **Vibecoded**: Entirely designed and engineered with autonomous agent pair-programming using **Google Antigravity (AGY)** and the **BMad Method**.
+
+**Interactive Simulator:** Try out colors and profiles on the live [Documentation & Hardware Simulator](https://jeremylanes.github.io/msi-rgb/).
+
+---
+
+## Installation
+
+### Via Cargo (crates.io)
+
+Ensure you have GTK4 development headers installed on your system:
+
+- **Fedora**: `sudo dnf install gtk4-devel cairo-gobject-devel glib2-devel pkgconf-pkg-config`
+- **Ubuntu / Debian**: `sudo apt install libgtk-4-dev libcairo2-dev libglib2.0-dev pkg-config`
+- **Arch Linux**: `sudo pacman -S gtk4 cairo glib2 pkgconf`
+
+Then install with Cargo:
 
 ```bash
 cargo install msi-rgb
 ```
 
-*(Note: Requires GTK4 development headers on your system, e.g. `sudo dnf install gtk4-devel` on Fedora or `sudo apt install libgtk-4-dev` on Ubuntu/Debian).*
+### 1-Line Installer via cURL (Alternative)
 
-### 1-Line Installer via `curl`
-
-Install dependencies, compile, and configure the desktop application and autostart in a single command:
+Installs system dependencies, compiles release binary, and configures desktop launcher and icons:
 
 ```bash
-# Install to your user session (no sudo required)
+# User session installation (recommended)
 curl -fsSL https://raw.githubusercontent.com/jeremylanes/msi-rgb/main/bin/install.sh | bash -s -- --user
 
-# Or install system-wide (requires sudo)
+# System-wide installation
 curl -fsSL https://raw.githubusercontent.com/jeremylanes/msi-rgb/main/bin/install.sh | bash -s -- --system
-```
-
-### From Local Source Repository
-```bash
-./bin/install.sh --user
 ```
 
 ---
 
-## 🚀 Quick Start
+## Quickstart
 
-### 1. Launching GUI
 ```bash
-# Directly via application menu or terminal command
+# 1. Apply smooth whole-keyboard spectrum wave (runs detached in background)
+msi-rgb --profile "Spectrum Harmony"
+
+# 2. Set MSI signature dragon red solid backlight (saved to hardware flash)
+msi-rgb --profile "Gaming Red"
+
+# 3. List all built-in and user profiles
+msi-rgb --list-profiles
+
+# 4. Launch the graphical studio interface
 msi-rgb
-
-# Or from local source directory
-./bin/msi-rgb
 ```
 
-### 2. CLI Usage Examples
-```bash
-# List all configured profiles
-./bin/msi-rgb --list-profiles
+---
 
-# Apply a profile instantly and exit
-./bin/msi-rgb --profile "Spectrum Harmony"
+## Command Reference
 
-# Apply startup default profile
-./bin/msi-rgb --apply-default
+| Command / Flag | Description | Example |
+|---|---|---|
+| `msi-rgb` | Launch the GTK4 graphical studio interface | `msi-rgb` |
+| `--profile <NAME>` | Apply a profile instantly (detaches background daemon for dynamic cycles) | `msi-rgb --profile "Cyberpunk Neon"` |
+| `--list-profiles` | Print all configured factory and user profiles to stdout | `msi-rgb --list-profiles` |
+| `--apply-default` | Apply the startup default profile configured in settings | `msi-rgb --apply-default` |
+| `--daemon` | Run headless in background for software animation loops | `msi-rgb --daemon` |
+| `--mock` | Run in offline simulation mode without physical hardware | `msi-rgb --mock` |
 
-# Run in offline simulation mock mode
-./bin/msi-rgb --mock
+---
 
-# Run in headless background daemon mode
-./bin/msi-rgb --daemon
-```
+## Window Manager Keybindings
 
-### 3. Hyprland / Sway Keybindings Integration
-Add the following to your `hyprland.conf`:
+Add fast lighting profile switches to your `hyprland.conf`, `sway/config`, or `i3/config`:
+
 ```ini
-# Fast RGB Profile Switching
+# Hyprland example
 bind = $mainMod, F5, exec, msi-rgb --profile "Spectrum Harmony"
-bind = $mainMod, F6, exec, msi-rgb --profile "Cyberpunk Neon"
-bind = $mainMod, F7, exec, msi-rgb --profile "Night Shift"
+bind = $mainMod, F6, exec, msi-rgb --profile "Gaming Red"
+bind = $mainMod, F7, exec, msi-rgb --profile "Cyberpunk Neon"
 bind = $mainMod, F8, exec, msi-rgb --profile "Stealth Off"
 ```
 
 ---
 
-## 🛠 Project Structure
+## Udev Rules (Non-Root Access)
 
-```text
-msi_rgb/
-├── bin/
-│   ├── msi-rgb          # Application launcher
-│   ├── run-tests        # Full verification suite (fmt, clippy, unit, doctest)
-│   ├── package-rpm      # Fedora package staging helper
-│   └── backup-config    # Configuration backup archiver
-├── packaging/
-│   ├── msi-rgb.spec     # RPM package specification
-│   ├── 99-msi-rgb.rules # Linux udev rule for non-root hidraw access
-│   ├── com.msi.mysticlight.rgb.desktop
-│   └── com.msi.mysticlight.rgb.svg
-├── src/
-│   ├── main.rs          # CLI argument parser and runtime entry point
-│   ├── lib.rs           # Core library exports
-│   ├── domain/          # Pure business logic (Color with HSV, Effect, Zone, Device, Profile)
-│   ├── backend/         # Hardware abstraction (RgbBackend trait, Native Linux HID, Mock)
-│   ├── effects/         # Effect models and color palettes
-│   ├── profiles/        # Preset management and factory profiles
-│   ├── persistence/     # Atomic XDG storage with schema migration
-│   ├── settings/        # App configuration
-│   ├── infrastructure/  # Logging, autostart (XDG & systemd)
-│   ├── app/             # Background async worker service and state handle
-│   └── ui/              # GTK4 graphical interface (Cairo HSV wheel, visualizer, studio)
-└── tests/               # Comprehensive unit and integration test suites
+To interact with `/dev/hidraw*` without `sudo`, install the udev rule:
+
+```bash
+sudo cp packaging/99-msi-rgb.rules /etc/udev/rules.d/
+sudo udevadm control --reload-rules && sudo udevadm trigger
 ```
 
 ---
 
-## 🧪 Testing & Verification
+## License
 
-Run the test suite with one command:
-```bash
-./bin/run-tests
-```
+Licensed under either of [MIT](LICENSE) or [Apache-2.0](LICENSE) at your option.
