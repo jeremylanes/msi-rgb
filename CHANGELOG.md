@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.2.2] - 2026-10-25
+
+### Other Changes
+
+- revamp README, add interactive GitHub Pages showcase and deployment workflow
+
 ## [v0.2.1] - 2026-10-25
 
 ### Other Changes

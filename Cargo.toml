@@ -1,6 +1,6 @@
 [package]
 name = "msi-rgb"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2024"
 description = "Native Linux RGB keyboard controller for MSI Katana 15 HX laptops"
 license = "MIT OR Apache-2.0"
